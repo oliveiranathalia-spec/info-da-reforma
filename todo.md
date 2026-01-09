@@ -49,4 +49,10 @@
 - [x] Verificar responsividade
 - [x] Testar modo escuro
 - [x] Criar testes unitários (24 testes passando)
-- [ ] Criar checkpoint final
+- [x] Criar checkpoint final
+
+## Versão Web (Desktop)
+- [x] Verificar funcionamento no navegador
+- [x] Ajustar layout responsivo para telas maiores
+- [x] Otimizar navegação para mouse/teclado
+- [x] Testar todas as funcionalidades no browser

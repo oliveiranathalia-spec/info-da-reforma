@@ -89,7 +89,7 @@ export default function HomeScreen() {
             {getGreeting()}
           </Text>
           <Text style={[styles.title, { color: colors.foreground }]}>
-            Reforma Tributária
+            Info da Reforma
           </Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>
             Seu guia completo sobre IBS, CBS e a nova tributação

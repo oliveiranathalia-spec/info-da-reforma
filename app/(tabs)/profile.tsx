@@ -215,7 +215,7 @@ export default function ProfileScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.muted }]}>
-            Consulta Reforma Tributária
+            Info da Reforma
           </Text>
           <Text style={[styles.footerText, { color: colors.muted }]}>
             Versão 1.0.0 • 2026

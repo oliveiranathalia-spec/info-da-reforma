@@ -56,3 +56,10 @@
 - [x] Ajustar layout responsivo para telas maiores
 - [x] Otimizar navegação para mouse/teclado
 - [x] Testar todas as funcionalidades no browser
+
+## Rebranding - Info da Reforma
+- [x] Atualizar nome do app para "Info da Reforma"
+- [x] Atualizar app.config.ts com novo nome
+- [x] Gerar novo logo com identidade visual
+- [x] Atualizar textos e títulos nas telas
+- [ ] Configurar domínio infodareforma.com.br (aguardando hospedagem)

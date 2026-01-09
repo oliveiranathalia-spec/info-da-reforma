@@ -63,3 +63,11 @@
 - [x] Gerar novo logo com identidade visual
 - [x] Atualizar textos e títulos nas telas
 - [ ] Configurar domínio infodareforma.com.br (aguardando hospedagem)
+
+## Integração com IA (Google Gemini)
+- [x] Configurar chave API do Gemini (validada)
+- [x] Criar endpoint de backend para Gemini
+- [x] Adicionar contexto de legislação tributária ao prompt
+- [x] Integrar chat do app com IA real
+- [x] Testar respostas sobre IBS, CBS e reforma
+- [x] Validar citações de legislação nas respostas

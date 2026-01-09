@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { trpc } from "@/lib/trpc";
 
 interface Message {
   id: string;
@@ -29,6 +30,8 @@ const SUGGESTED_QUESTIONS = [
   "Qual a diferença entre CBS e PIS/COFINS?",
   "Como funciona o período de transição?",
   "Quem precisa se adaptar em 2026?",
+  "Qual a alíquota do IBS e CBS?",
+  "O que é o Imposto Seletivo?",
 ];
 
 const INITIAL_MESSAGES: Message[] = [
@@ -40,47 +43,15 @@ const INITIAL_MESSAGES: Message[] = [
   },
 ];
 
-// Simulated AI responses for demo
-const AI_RESPONSES: Record<string, { text: string; sources: string[] }> = {
-  "o que é o ibs": {
-    text: "O **IBS (Imposto sobre Bens e Serviços)** é um novo tributo criado pela Reforma Tributária que substituirá o ICMS (estadual) e o ISS (municipal).\n\n**Principais características:**\n\n• Tributo de competência compartilhada entre Estados e Municípios\n• Administrado pelo Comitê Gestor do IBS (CG-IBS)\n• Não cumulativo, com crédito amplo\n• Alíquota única por ente federativo\n• Cobrança no destino (onde ocorre o consumo)\n\nA transição do ICMS e ISS para o IBS ocorrerá gradualmente entre 2026 e 2033.",
-    sources: ["LC 214/2024, Art. 1º", "EC 132/2023, Art. 156-A"],
-  },
-  "qual a diferença entre cbs e pis/cofins": {
-    text: "A **CBS (Contribuição sobre Bens e Serviços)** é o novo tributo federal que substituirá o PIS e a COFINS.\n\n**Principais diferenças:**\n\n| Aspecto | PIS/COFINS | CBS |\n|---------|------------|-----|\n| Cumulatividade | Regime cumulativo e não-cumulativo | Sempre não-cumulativo |\n| Base de cálculo | Múltiplas bases | Base única |\n| Alíquotas | Várias alíquotas | Alíquota única |\n| Créditos | Restrições | Crédito amplo |\n\nA CBS será administrada pela Receita Federal e entrará em vigor efetivamente em 2027.",
-    sources: ["LC 214/2024, Art. 2º", "EC 132/2023, Art. 195"],
-  },
-  "como funciona o período de transição": {
-    text: "O período de transição da Reforma Tributária está dividido em fases:\n\n**2026 - Fase Educativa:**\n• Testes e validação de sistemas\n• Sem recolhimento efetivo de IBS/CBS\n• Sem aplicação de penalidades\n• Apuração meramente informativa\n\n**2027 - Início da CBS:**\n• Cobrança efetiva da CBS (federal)\n• Alíquota de teste de 0,9%\n\n**2027-2033 - Transição gradual:**\n• Redução progressiva de ICMS/ISS\n• Aumento progressivo do IBS\n• Extinção total do ICMS/ISS em 2033\n\nDurante todo o período, os sistemas fiscais (NF-e, NFC-e, etc.) terão campos específicos para os novos tributos.",
-    sources: ["LC 214/2024, Art. 125", "Ato Conjunto RFB/CGIBS 01/2025"],
-  },
-  "quem precisa se adaptar em 2026": {
-    text: "Em **2026**, todos os contribuintes que emitem documentos fiscais eletrônicos precisam se preparar:\n\n**Obrigações em 2026:**\n\n• Atualização de sistemas para incluir campos de IBS e CBS nos documentos fiscais\n• Participação na fase de testes\n• Apuração informativa (sem recolhimento)\n\n**Quem está envolvido:**\n\n• Empresas do Lucro Real e Presumido\n• Empresas do Simples Nacional\n• Prestadores de serviços\n• Importadores e exportadores\n\n**Importante:** Durante 2026, não haverá penalidades por erros no preenchimento dos novos campos, desde que as obrigações acessórias sejam cumpridas.",
-    sources: ["Ato Conjunto RFB/CGIBS 01/2025", "LC 214/2024"],
-  },
-};
-
-function getAIResponse(question: string): { text: string; sources: string[] } {
-  const normalizedQuestion = question.toLowerCase().trim();
-  
-  for (const [key, response] of Object.entries(AI_RESPONSES)) {
-    if (normalizedQuestion.includes(key)) {
-      return response;
-    }
-  }
-  
-  return {
-    text: "Obrigado pela sua pergunta! Para fornecer uma resposta precisa e fundamentada na legislação, preciso consultar nossa base de dados legal.\n\nEsta é uma versão de demonstração. Na versão completa, a IA analisará a Lei Complementar 214/2024, a Emenda Constitucional 132/2023 e outras normas para responder sua dúvida com citações das fontes legais.",
-    sources: ["Demonstração"],
-  };
-}
-
 export default function ChatScreen() {
   const colors = useColors();
   const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Mutation para enviar mensagem para a IA
+  const sendMessageMutation = trpc.chat.sendMessage.useMutation();
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -97,30 +68,60 @@ export default function ChatScreen() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const questionText = inputText.trim();
     setInputText("");
     setIsLoading(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const response = getAIResponse(userMessage.text);
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.text,
-        isUser: false,
-        timestamp: new Date(),
-        sources: response.sources,
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsLoading(false);
-      
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }, 1500);
-
+    // Scroll para baixo após adicionar mensagem do usuário
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
+
+    try {
+      // Preparar histórico de conversa (excluindo mensagem de boas-vindas)
+      const history = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({
+          role: m.isUser ? "user" as const : "assistant" as const,
+          content: m.text
+        }));
+
+      // Chamar a API real
+      const result = await sendMessageMutation.mutateAsync({
+        message: questionText,
+        history,
+      });
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: result.response,
+        isUser: false,
+        timestamp: new Date(),
+        sources: result.success ? undefined : ["Erro"],
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      
+      // Mensagem de erro amigável
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Desculpe, ocorreu um erro ao processar sua pergunta. Por favor, tente novamente em alguns instantes.",
+        isUser: false,
+        timestamp: new Date(),
+        sources: ["Erro de conexão"],
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      
+      // Scroll para baixo após resposta
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
   };
 
   const handleSuggestionPress = (question: string) => {
@@ -143,7 +144,7 @@ export default function ChatScreen() {
             Assistente Tributário
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.muted }]}>
-            Powered by IA • Base legal atualizada
+            Powered by Gemini AI • Base legal atualizada
           </Text>
         </View>
 
@@ -191,7 +192,7 @@ export default function ChatScreen() {
             <View style={[styles.loadingBubble, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={[styles.loadingText, { color: colors.muted }]}>
-                Analisando legislação...
+                Consultando legislação...
               </Text>
             </View>
           )}
@@ -234,7 +235,7 @@ export default function ChatScreen() {
                 borderColor: colors.border,
               },
             ]}
-            placeholder="Digite sua pergunta..."
+            placeholder="Digite sua pergunta sobre a reforma..."
             placeholderTextColor={colors.muted}
             value={inputText}
             onChangeText={setInputText}
@@ -248,11 +249,15 @@ export default function ChatScreen() {
             disabled={!inputText.trim() || isLoading}
             style={({ pressed }) => [
               styles.sendButton,
-              { backgroundColor: inputText.trim() ? colors.primary : colors.muted },
+              { backgroundColor: inputText.trim() && !isLoading ? colors.primary : colors.muted },
               pressed && { opacity: 0.8 },
             ]}
           >
-            <IconSymbol name="paperplane.fill" size={20} color="#FFFFFF" />
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <IconSymbol name="paperplane.fill" size={20} color="#FFFFFF" />
+            )}
           </Pressable>
         </View>
       </KeyboardAvoidingView>

@@ -71,3 +71,8 @@
 - [x] Integrar chat do app com IA real
 - [x] Testar respostas sobre IBS, CBS e reforma
 - [x] Validar citações de legislação nas respostas
+
+## Correção - API IA no Vercel
+- [ ] Criar API serverless para chat com Gemini
+- [ ] Atualizar frontend para usar nova API
+- [ ] Testar no Vercel

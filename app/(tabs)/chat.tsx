@@ -15,7 +15,6 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { trpc } from "@/lib/trpc";
 
 interface Message {
   id: string;
@@ -43,15 +42,22 @@ const INITIAL_MESSAGES: Message[] = [
   },
 ];
 
+// Detectar URL base da API
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // No browser, usar a mesma origem
+    return window.location.origin;
+  }
+  // Fallback para desenvolvimento
+  return 'https://info-da-reforma.vercel.app';
+};
+
 export default function ChatScreen() {
   const colors = useColors();
   const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mutation para enviar mensagem para a IA
-  const sendMessageMutation = trpc.chat.sendMessage.useMutation();
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -86,18 +92,30 @@ export default function ChatScreen() {
           content: m.text
         }));
 
-      // Chamar a API real
-      const result = await sendMessageMutation.mutateAsync({
-        message: questionText,
-        history,
+      // Chamar a API serverless
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: questionText,
+          history,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const result = await response.json();
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: result.response,
         isUser: false,
         timestamp: new Date(),
-        sources: result.success ? undefined : ["Erro"],
       };
 
       setMessages((prev) => [...prev, aiMessage]);

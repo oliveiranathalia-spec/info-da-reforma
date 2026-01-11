@@ -64,7 +64,7 @@ export default async function handler(req) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key not configured', debug: 'No GEMINI_API_KEY found' }), {
+      return new Response(JSON.stringify({ error: 'API key not configured' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -97,60 +97,47 @@ export default async function handler(req) {
       parts: [{ text: message }]
     });
 
-    // Try gemini-1.5-flash first (more stable), fallback to gemini-pro
-    const models = ['gemini-1.5-flash', 'gemini-pro'];
-    let lastError = null;
-
-    for (const model of models) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents,
-              generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048,
-              },
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
-
-          return new Response(JSON.stringify({ response: aiResponse }), {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-            },
-          });
-        }
-
-        const errorData = await response.json();
-        lastError = errorData;
-        console.error(`Model ${model} error:`, errorData);
-      } catch (modelError) {
-        lastError = modelError;
-        console.error(`Model ${model} exception:`, modelError);
+    // Use gemini-1.5-flash (correct model name for v1beta)
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          },
+        }),
       }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API error:', errorData);
+      return new Response(JSON.stringify({ 
+        error: 'Failed to get AI response', 
+        details: errorData?.error?.message || 'Unknown error'
+      }), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
-    // All models failed
-    return new Response(JSON.stringify({ 
-      error: 'Failed to get AI response', 
-      details: lastError?.error?.message || 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 
+    const data = await response.json();
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
+
+    return new Response(JSON.stringify({ response: aiResponse }), {
+      status: 200,
+      headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },

@@ -33,7 +33,7 @@ Regras de Resposta:
 5. Mantenha as respostas objetivas e diretas`;
 
 export default async function handler(req) {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 200,
@@ -64,7 +64,7 @@ export default async function handler(req) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key not configured' }), {
+      return new Response(JSON.stringify({ error: 'API key not configured', debug: 'No GEMINI_API_KEY found' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -97,55 +97,73 @@ export default async function handler(req) {
       parts: [{ text: message }]
     });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          ],
-        }),
-      }
-    );
+    // Try gemini-1.5-flash first (more stable), fallback to gemini-pro
+    const models = ['gemini-1.5-flash', 'gemini-pro'];
+    let lastError = null;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Gemini API error:', errorData);
-      return new Response(JSON.stringify({ error: 'Failed to get AI response' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+              },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
+
+          return new Response(JSON.stringify({ response: aiResponse }), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        }
+
+        const errorData = await response.json();
+        lastError = errorData;
+        console.error(`Model ${model} error:`, errorData);
+      } catch (modelError) {
+        lastError = modelError;
+        console.error(`Model ${model} exception:`, modelError);
+      }
     }
 
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
-
-    return new Response(JSON.stringify({ response: aiResponse }), {
-      status: 200,
-      headers: {
+    // All models failed
+    return new Response(JSON.stringify({ 
+      error: 'Failed to get AI response', 
+      details: lastError?.error?.message || 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
     });
+
   } catch (error) {
     console.error('Chat API error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   }
 }

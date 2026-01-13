@@ -76,3 +76,17 @@
 - [ ] Criar API serverless para chat com Gemini
 - [ ] Atualizar frontend para usar nova API
 - [ ] Testar no Vercel
+
+
+## Banco de Dados Legal - Fontes (38 sites)
+- [ ] Sites Oficiais: gov.br/fazenda, planalto.gov.br, cgibs.gov.br, receita federal
+- [ ] Portais Técnicos: comsefaz, cfc, fenacon, cni, fiesp
+- [ ] Portais de Notícias: jota, contabeis, portaltributario, guiatributario
+- [ ] Ferramentas: calculadora CBS, legisweb, totvs
+- [ ] Estruturar base de dados em formato JSON
+- [ ] Integrar base de dados ao prompt da IA
+
+
+## Personalização da IA
+- [ ] Atualizar prompt com instruções do usuário (tom técnico-acadêmico)
+- [ ] Testar novas respostas

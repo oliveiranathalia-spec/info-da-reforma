@@ -32,6 +32,11 @@ const MAPPING: Record<string, MaterialIconName> = {
   "magnifyingglass": "search",
   "plus": "add",
   "minus": "remove",
+  "mic.fill": "mic",
+  "mic.slash.fill": "mic-off",
+  "paperclip": "attach-file",
+  "doc.fill": "insert-drive-file",
+  "xmark": "close",
 };
 
 type IconSymbolName = keyof typeof MAPPING;

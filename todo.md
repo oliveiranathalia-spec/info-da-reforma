@@ -88,5 +88,12 @@
 
 
 ## Personalização da IA
-- [ ] Atualizar prompt com instruções do usuário (tom técnico-acadêmico)
+- [x] Atualizar prompt com instruções do usuário (tom técnico-acadêmico)
 - [ ] Testar novas respostas
+
+
+## Novas Funcionalidades - Chat
+- [x] Implementar microfone (Web Speech API) para voz para texto
+- [x] Implementar upload de arquivos XML (NF-e)
+- [x] Implementar upload de arquivos PDF
+- [ ] Testar funcionalidades no navegador

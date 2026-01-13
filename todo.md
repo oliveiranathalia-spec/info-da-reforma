@@ -97,3 +97,10 @@
 - [x] Implementar upload de arquivos XML (NF-e)
 - [x] Implementar upload de arquivos PDF
 - [ ] Testar funcionalidades no navegador
+
+
+## Integração API Receita Federal
+- [x] Estudar ferramenta oficial de cálculo da Receita Federal
+- [x] Identificar e documentar endpoints da API
+- [x] Integrar API ao aplicativo
+- [ ] Criar relatório final

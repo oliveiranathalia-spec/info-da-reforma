@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 
+import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -155,6 +156,28 @@ export default function CalculatorsScreen() {
           </Text>
 
           <View style={styles.calculatorsList}>
+            <Pressable
+              onPress={() => router.push("/calculadora-oficial")}
+              style={({ pressed }) => [
+                styles.calculatorCard,
+                { backgroundColor: colors.surface, borderColor: colors.primary },
+                pressed && styles.cardPressed,
+              ]}
+            >
+              <View style={[styles.cardIcon, { backgroundColor: colors.success + "15" }]}>
+                <IconSymbol name="checkmark.circle.fill" size={28} color={colors.success} />
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+                  Calculadora Oficial RFB
+                </Text>
+                <Text style={[styles.cardDescription, { color: colors.muted }]}>
+                  Dados oficiais da Receita Federal
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={20} color={colors.muted} />
+            </Pressable>
+
             <Pressable
               onPress={() => setCurrentView("ibs-cbs")}
               style={({ pressed }) => [

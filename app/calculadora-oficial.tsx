@@ -192,8 +192,9 @@ export default function CalculadoraOficialScreen() {
             <Text style={[styles.label, { color: colors.foreground }]}>
               Data de Referência
             </Text>
-            <View style={styles.dateOptions}>
-              {["2026-01-01", "2027-01-01", "2028-01-01", "2033-01-01"].map((d) => (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.dateOptions}>
+              {["2026-01-01", "2027-01-01", "2028-01-01", "2029-01-01", "2030-01-01", "2031-01-01", "2032-01-01", "2033-01-01"].map((d) => (
                 <Pressable
                   key={d}
                   onPress={() => setData(d)}
@@ -208,7 +209,8 @@ export default function CalculadoraOficialScreen() {
                   </Text>
                 </Pressable>
               ))}
-            </View>
+              </View>
+            </ScrollView>
           </View>
 
           <View style={styles.inputGroup}>
@@ -216,7 +218,7 @@ export default function CalculadoraOficialScreen() {
               Estado (UF)
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ufScroll}>
-              {ufs.slice(0, 10).map((uf) => (
+              {ufs.map((uf) => (
                 <Pressable
                   key={uf.codigo}
                   onPress={() => setSelectedUf(uf)}

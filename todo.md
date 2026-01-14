@@ -104,3 +104,8 @@
 - [x] Identificar e documentar endpoints da API
 - [x] Integrar API ao aplicativo
 - [ ] Criar relatório final
+
+
+## Melhorias Calculadora Oficial
+- [x] Incluir todos os anos de 2026 a 2033
+- [x] Incluir todos os 27 estados brasileiros
